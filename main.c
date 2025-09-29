@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 // New functions
@@ -22,45 +23,57 @@ int main() {
       perror("Error opening file");
       return 1;
    }
-
    
    char line[256];
    int index = 1;
    int numPassed = 0;
+
    while (fgets(line, sizeof(line), file)) {
       char func[50];
-      int input;
-      int expected;
+      char input[50];
       char expectedStr[50];
       char format[50];
 
-         if (sscanf(line, "%s %d %s", func, &input, &expectedStr) == 3) {
+      int32_t n;
+
+      // Ignore comment lines in the text file
+      if (line[0] == '#') {
+            continue;
+      }
+
+      if (sscanf(line, "%s %s %s", func, &input, &expectedStr) == 3) {
+         // For mapping functions, cast the input as a const char * when making the call
             if (strcmp(func, "oct_to_bin") == 0) {
                oct_to_bin((const char *)input, output);
             } else if (strcmp(func, "oct_to_hex") == 0) {
                oct_to_hex((const char *)input, output);
             } else if (strcmp(func, "hex_to_bin") == 0) {
                hex_to_bin((const char *)input, output);
+         // For signed number representations, convert the input to an integer before making the call
             } else if (strcmp(func, "to_sign_magnitude") == 0) {
-               to_sign_magnitude(input, output);
+               n = atoi(input);
+               to_sign_magnitude(n, output);
             } else if (strcmp(func, "to_ones_complement") == 0) {
-               to_ones_complement(input, output);
+               n = atoi(input);
+               to_ones_complement(n, output);
             } else if (strcmp(func, "to_twos_complement") == 0) {
-               to_twos_complement(input, output);
+               n = atoi(input);
+               to_twos_complement(n, output);
             }
-            printf("Test %d: %s(%u) -> Expected: \"%s\", Got: \"%s\" ", index, func, input, expectedStr, output);
+
+            printf("Test %d: %s(%s) -> Expected: \"%s\", Got: \"%s\" ", index, func, input, expectedStr, output);
             if (strcmp(output, expectedStr) == 0) {
                printf("[PASS]\n");
                numPassed++;
             } else {
                printf("[FAIL]\n");
             }
-         }
-      index++;
+            index++;
+      }
    }
 
    fclose(file);
-   printf("Autocheck tests passed: %d", numPassed);
+   printf("Tests passed: %d/51", numPassed);
 
    return 0;
 }
